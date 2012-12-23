@@ -8,7 +8,10 @@
     "sequelize": "~1.6.0-beta4",
     "pg": "~0.10.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "chai": "~1.4.2",
+    "mocha": "~1.7.4"
+  },
   "optionalDependencies": {},
   "engines": {
     "node": "*"
