@@ -1,35 +1,56 @@
 var expect = require('chai').expect;
-var database = require('../database').init();
-var pkg = database.Package;
+var pkg ;
 
-database.sequelize.options.logging = false ;
+var database = require('../database');
+
+before(function(done){
+    database.init(function () {
+        pkg = database.model;
+        done();
+    });
+});
+
+afterEach(function(done){
+    pkg.remove({}, function() {
+        done();
+    });
+});
+
 
 describe('Package', function(){
   describe('at creation', function(){
     it('should have 0 hit', function(){
-      expect(pkg.build().hits).to.equal(0);
+      expect((new pkg()).hits).to.equal(0);
     });
 
     it('should save creation date', function(){
-      expect(pkg.build()).to.have.property('createdAt');
+      expect((new pkg())).to.have.property('createdAt');
     });
 
-    it('should save creation date', function(){
-      expect(pkg.build()).to.have.property('createdAt');
-    });
   });
 
   describe('validation', function () {
-    it('should fail if url protocol is not git', function () {
-        expect(pkg.build({url: 'lalala'}).validate()).to.have.property('url');
-        expect(pkg.build({url: 'http://lalala'}).validate()).to.have.property('url');
-        expect(pkg.build({url: 'git://lalala'}).validate()).to.be.a('null');
+    it('should fail if url protocol is not git', function (done) {
+        var foobar = new pkg({name: 'foo', url: 'http://bar'});
+        foobar.save(function (err) {
+            expect(err.errors).to.have.property('url');
+            done();
+        });
     });
+
+    it('should succeed if url protocol is not git', function (done) {
+        var foobar = new pkg({name: 'foo', url: 'git://foo'});
+        foobar.save(function (err) {
+            expect(err).to.be.a('null');
+            done();
+        });
+    });
+
   });
 
   describe('behavior', function () {
     it('should add a hit', function () {
-        var foobar = pkg.build({name: 'foo', url: 'git://bar'});
+        var foobar = new pkg({name: 'foo', url: 'git://bar'});
         expect(foobar.hits).to.equal(0);
         foobar.hit();
         expect(foobar.hits).to.equal(1);

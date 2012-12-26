@@ -5,8 +5,8 @@
   "version": "0.0.1",
   "dependencies": {
     "express": "~3.0.5",
-    "sequelize": "~1.6.0-beta4",
-    "pg": "~0.10.2"
+    "pg": "~0.10.2",
+    "underscore": "~1.4.3"
   },
   "devDependencies": {
     "chai": "~1.4.2",

@@ -1,56 +1,68 @@
-var Sequelize = require("sequelize");
-var _ = Sequelize.Utils._ ;
+var mongoose = require('mongoose');
 
 var Database = {
-    init: function () {
-        this.sequelize = new Sequelize('development', 'jblanche', '', {
-            dialect: 'postgres',
-            port: 5432
-        }),
+  schema: null,
+  model: null,
 
-        this.Package = this.sequelize.define('Package',
-          {
-            name: {
-              type: Sequelize.STRING,
-              unique: true,
-              allowNull: false
-            },
-            url: {
-              type: Sequelize.STRING,
-              unique: true,
-              allowNull: false,
-              validate: {
-                isGitUrl: function(value) {
-                  if (!value.match(/^git\:\/\//)) {
-                    throw new Error('is not correct format');
-                  }
-                  return this;
-                }
-              }
-            },
-            hits: {
-              type: Sequelize.INTEGER,
-              defaultValue: 0
-            }
-          } , {
-          instanceMethods: {
-            hit: function () {
-              this.hits += 1 ;
-              this.save();
-            }
-          }
-        });
-        return this;
-    },
+  init: function (cb) {
+    mongoose.connect('localhost', 'test');
+    var db = mongoose.connection;
 
-    onSync: function () {
-        var addIndex = this.sequelize.getQueryInterface().addIndex('Packages', ['name']);
-        addIndex.error(function(e) {
-          if(e.toString() !== 'error: relation "packages_name" already exists'){
-            throw e;
-          }
-        });
-    }
+    mongoose.set('debug', true);
+
+
+    db.on('error', console.error.bind(console, 'connection error:'));
+    db.once('open', function () {
+      this.createSchema();
+      this.createMethods();
+      this.createModel();
+      this.createValidations();
+      cb();
+    }.bind(this));
+    return this;
+  },
+
+  createSchema: function () {
+    this.schema = mongoose.Schema({
+      name:  { type: String, index: { unique: true }, required: true },
+      url: { type: String, index: { unique: true }, required: true },
+      hits:   {type: Number, default: 0},
+      createdAt: {type: Date, default: Date.now }
+    });
+  },
+
+  createMethods: function () {
+    this.schema.methods.hit = function () {
+      this.hits += 1 ;
+      this.save();
+    };
+  },
+  createModel: function () {
+    this.model = mongoose.model('Package', this.schema);
+  },
+  createValidations: function () {
+    this.schema.path('url').validate(function (value) {
+      return value.match(/^git\:\/\//);
+    }, 'Invalid url');
+  },
+
+  all: function(cb) {
+    this.model.find(cb);
+  },
+
+  findPackage: function (name, cb) {
+    this.model.findOne().where('name').equals(name).exec(cb);
+  },
+
+  search: function (name, cb) {
+    var regexp = new RegExp(name, 'i');
+    this.model.find().where('name', regexp).exec(cb);
+  },
+
+  create: function (model, cb) {
+    var pkg = new this.model(model);
+    pkg.save(cb);
+  }
 };
 
 module.exports = Object.create(Database);

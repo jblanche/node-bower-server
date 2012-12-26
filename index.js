@@ -1,11 +1,8 @@
-var database = require('./database').init();
+var database = require('./database');
 var webserver = require('./webserver').init();
 
-var sync = database.Package.sync();
-
-sync.success(database.onSync.bind(database));
-
-sync.success(function (pkg) {
-  webserver.app.set('pkg', pkg);
+database.init(function () {
+  webserver.app.set('database', database);
   webserver.listen(3000);
 });
+
