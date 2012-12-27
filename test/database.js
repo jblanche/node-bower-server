@@ -14,9 +14,6 @@ describe('Package', function(){
       expect(pkg.build()).to.have.property('createdAt');
     });
 
-    it('should save creation date', function(){
-      expect(pkg.build()).to.have.property('createdAt');
-    });
   });
 
   describe('validation', function () {
